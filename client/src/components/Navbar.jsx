@@ -17,7 +17,7 @@ function Navbar({ user, onLogout }) {
         <div className="navbar-links">
           <Link to="/" className="navbar-link">Home</Link>
           <Link to="/skills" className="navbar-link">Skills</Link>
-          <Link to="/dashboard" className="navbar-link">Dashboard</Link>
+          <Link to="/dashboard" className="navbar-link">My Sessions</Link>
           {user ? (
             <>
               <Link to={`/profile/${user.id}`} className="navbar-link profile-link">

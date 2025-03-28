@@ -63,7 +63,7 @@ function Dashboard({ user }) {
         <div className="stats-grid">
           <div className="stat-card"><h3>Total Sessions</h3><p>{stats.totalSessions}</p></div>
           <div className="stat-card"><h3>Completed Sessions</h3><p>{stats.completedSessions}</p></div>
-          <div className="stat-card"><h3>Average Rating</h3><p>{stats.rating}/5</p></div>
+          {/* <div className="stat-card"><h3>Average Rating</h3><p>{stats.rating}/5</p></div> */}
         </div>
       </section>
       <section className="dashboard-section">
@@ -80,8 +80,8 @@ function Dashboard({ user }) {
                   <p><strong>Status:</strong> {session.status}</p>
                   {session.status !== 'completed' && session.status !== 'cancelled' && (
                     <div className="session-actions">
-                      <button onClick={() => handleCancelSession(session._id)} className="cancel-session-btn">Cancel</button>
-                      <button onClick={() => handleRescheduleSession()} className="reschedule-session-btn">Reschedule</button>
+                      {/* <button onClick={() => handleCancelSession(session._id)} className="cancel-session-btn">Cancel</button>
+                      <button onClick={() => handleRescheduleSession()} className="reschedule-session-btn">Reschedule</button> */}
                     </div>
                   )}
                 </div>
@@ -89,22 +89,6 @@ function Dashboard({ user }) {
             ))}
           </div>
         ) : <p>No sessions scheduled.</p>}
-      </section>
-      <section className="dashboard-section">
-        <h2>Recommended Matches</h2>
-        {matches.length ? (
-          <div className="match-grid">
-            {matches.map(match => (
-              <div key={match._id} className="match-card">
-                <img src={ProfileImg} alt="Tutor" className="match-image" />
-                <div className="match-details">
-                  <h3>{match.name}</h3>
-                  <p><strong>Tutor:</strong> {match.userId.username}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : <p>No matches found.</p>}
       </section>
     </div>
   );
