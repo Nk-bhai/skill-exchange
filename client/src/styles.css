@@ -1,0 +1,480 @@
+/* Reset and Base Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  line-height: 1.6;
+  background-color: #f4f4f4;
+  color: #333;
+}
+
+/* Container */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* Navbar */
+.navbar {
+  background-color: #2c3e50;
+  padding: 15px 20px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.navbar-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.navbar-logo {
+  color: #fff;
+  text-decoration: none;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.navbar-links {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.navbar-link {
+  color: #fff;
+  text-decoration: none;
+  font-size: 16px;
+  padding: 8px 12px;
+  transition: background-color 0.3s;
+}
+
+.navbar-link:hover {
+  background-color: #34495e;
+  border-radius: 5px;
+}
+
+.navbar-profile-image {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.profile-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logout-btn {
+  background-color: #e74c3c;
+  border: none;
+  cursor: pointer;
+}
+
+.logout-btn:hover {
+  background-color: #c0392b;
+}
+
+/* Auth Form */
+.auth-form {
+  background-color: #fff;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  max-width: 400px;
+  margin: 50px auto;
+}
+
+.auth-form h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #2c3e50;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 5px;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+.auth-btn {
+  width: 100%;
+  padding: 10px;
+  background-color: #3498db;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.auth-btn:hover {
+  background-color: #2980b9;
+}
+
+.toggle-auth {
+  text-align: center;
+  margin-top: 15px;
+  color: #3498db;
+  cursor: pointer;
+}
+
+/* Profile Card */
+.profile-card {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-top: 20px;
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.profile-image {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.profile-username {
+  font-size: 24px;
+  color: #2c3e50;
+}
+
+.profile-bio {
+  font-size: 16px;
+  color: #666;
+  margin-bottom: 15px;
+}
+
+.profile-detail {
+  font-size: 16px;
+  margin: 5px 0;
+}
+
+.profile-section {
+  margin: 15px 0;
+}
+
+.profile-section h3 {
+  font-size: 18px;
+  color: #2c3e50;
+  margin-bottom: 10px;
+}
+
+.skill-list {
+  list-style: none;
+}
+
+.skill-item {
+  background-color: #ecf0f1;
+  padding: 5px 10px;
+  margin: 5px 0;
+  border-radius: 5px;
+}
+
+.profile-edit-form textarea {
+  height: 100px;
+  resize: vertical;
+}
+
+.edit-btn, .save-btn, .cancel-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.edit-btn {
+  background-color: #3498db;
+  color: #fff;
+}
+
+.edit-btn:hover {
+  background-color: #2980b9;
+}
+
+.save-btn {
+  background-color: #2ecc71;
+  color: #fff;
+}
+
+.save-btn:hover {
+  background-color: #27ae60;
+}
+
+.cancel-btn {
+  background-color: #e74c3c;
+  color: #fff;
+  margin-left: 10px;
+}
+
+.cancel-btn:hover {
+  background-color: #c0392b;
+}
+
+/* Skills Page */
+.page-title {
+  font-size: 28px;
+  color: #2c3e50;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.matches-preview h2 {
+  font-size: 22px;
+  color: #2c3e50;
+  margin: 20px 0 10px;
+}
+
+.skill-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.skill-card, .match-card {
+  background-color: #fff;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.skill-image {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 10px;
+}
+
+.skill-name {
+  font-size: 18px;
+  color: #2c3e50;
+  margin-bottom: 5px;
+}
+
+.skill-category, .skill-tutor, .skill-desc {
+  font-size: 14px;
+  color: #666;
+  margin: 5px 0;
+}
+
+.schedule-form {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.schedule-form input,
+.schedule-form select,
+.schedule-form button {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.schedule-form button {
+  background-color: #2ecc71;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+}
+
+.schedule-form button:hover {
+  background-color: #27ae60;
+}
+
+.schedule-btn {
+  margin-top: 10px;
+  padding: 8px 12px;
+  background-color: #3498db;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.schedule-btn:hover {
+  background-color: #2980b9;
+}
+
+.filter-section {
+  margin: 20px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.filter-section label {
+  font-size: 16px;
+}
+
+.filter-section select {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+/* Dashboard */
+.dashboard-title {
+  font-size: 28px;
+  color: #2c3e50;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.dashboard-section {
+  margin: 30px 0;
+}
+
+.dashboard-section h2 {
+  font-size: 22px;
+  color: #2c3e50;
+  margin-bottom: 15px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 20px;
+}
+
+.stat-card {
+  background-color: #fff;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.stat-card h3 {
+  font-size: 18px;
+  color: #2c3e50;
+  margin-bottom: 10px;
+}
+
+.stat-card p {
+  font-size: 24px;
+  color: #3498db;
+}
+
+.session-grid, .match-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.session-card, .match-card {
+  background-color: #fff;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.session-image, .match-image {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.session-details h3, .match-details h3 {
+  font-size: 18px;
+  color: #2c3e50;
+  margin-bottom: 5px;
+}
+
+.session-details p, .match-details p {
+  font-size: 14px;
+  color: #666;
+  margin: 3px 0;
+}
+
+.session-actions {
+  margin-top: 10px;
+  display: flex;
+  gap: 10px;
+}
+
+.cancel-session-btn, .reschedule-session-btn {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.cancel-session-btn {
+  background-color: #e74c3c;
+  color: #fff;
+}
+
+.cancel-session-btn:hover {
+  background-color: #c0392b;
+}
+
+.reschedule-session-btn {
+  background-color: #f39c12;
+  color: #fff;
+}
+
+.reschedule-session-btn:hover {
+  background-color: #e67e22;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .navbar-container {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .navbar-links {
+    flex-direction: column;
+    width: 100%;
+    text-align: center;
+  }
+
+  .skill-grid, .session-grid, .match-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-header {
+    flex-direction: column;
+    text-align: center;
+  }
+}
