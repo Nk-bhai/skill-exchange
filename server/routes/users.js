@@ -31,7 +31,16 @@ router.put(
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { username, bio, location, experienceLevel, interests, skillsToTeach, skillsToLearn } = req.body;
+    const {
+      username,
+      bio,
+      location,
+      experienceLevel,
+      interests,
+      skillsToTeach,
+      skillsToLearn,
+      skillsToTeachCategory,
+    } = req.body;
 
     try {
       const user = await User.findById(req.user.id);
@@ -64,7 +73,7 @@ router.put(
       if (skillsToAdd.length) {
         const newSkills = skillsToAdd.map((name) => ({
           name,
-          category: 'General', // Default category
+          category: skillsToTeachCategory || 'General',
           userId: user._id,
           description: `Learn ${name} with ${user.username}`,
         }));

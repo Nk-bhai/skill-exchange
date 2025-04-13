@@ -13,7 +13,17 @@ function ProfileCard({ user, isOwnProfile }) {
     interests: user.interests?.join(', ') || '',
     skillsToTeach: user.skillsToTeach?.join(', ') || '',
     skillsToLearn: user.skillsToLearn?.join(', ') || '',
+    skillsToTeachCategory: 'Programming', // Default category
   });
+
+  const categories = [
+    'Programming',
+    'Design',
+    'Marketing',
+    'Data Science',
+    'DevOps',
+    'Database',
+  ];
 
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -108,6 +118,21 @@ function ProfileCard({ user, isOwnProfile }) {
               placeholder="Skills to teach (e.g., Python, JavaScript)"
             />
             <small>Enter skills you can teach, separated by commas</small>
+          </div>
+          <div className="form-group">
+            <label>Category for Skills to Teach</label>
+            <select
+              name="skillsToTeachCategory"
+              value={formData.skillsToTeachCategory}
+              onChange={handleInputChange}
+            >
+              {categories.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+            <small>Select a category for your skills</small>
           </div>
           <div className="form-group">
             <label>Skills to Learn</label>

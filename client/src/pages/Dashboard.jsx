@@ -4,6 +4,7 @@ import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import DatePicker from 'react-datepicker';
 import ProfileImg from '../assets/profile-placeholder.png';
+import '../App.css'; // Ensure CSS is imported
 
 function Dashboard({ user }) {
   const [sessions, setSessions] = useState([]);
@@ -14,31 +15,33 @@ function Dashboard({ user }) {
   const [rescheduleData, setRescheduleData] = useState({ date: new Date(), duration: 60, type: 'virtual' });
   const navigate = useNavigate();
 
+  const fetchData = async () => {
+    try {
+      const [sessionsRes, matchesRes] = await Promise.all([
+        axios.get('/api/sessions/my-sessions', { headers: { 'x-auth-token': localStorage.getItem('token') } }),
+        axios.get('/api/matches', { headers: { 'x-auth-token': localStorage.getItem('token') } }),
+      ]);
+      setSessions(sessionsRes.data);
+      setMatches(matchesRes.data);
+      setStats({
+        totalSessions: sessionsRes.data.length,
+        completedSessions: sessionsRes.data.filter((s) => s.status === 'completed').length,
+        rating: user.ratings?.length
+          ? (user.ratings.reduce((sum, r) => sum + r.rating, 0) / user.ratings.length).toFixed(1)
+          : 0,
+      });
+      setLoading(false);
+    } catch (error) {
+      toast.error(error.response?.data?.msg || 'Error fetching dashboard data');
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (!user) return navigate('/auth');
-
-    const fetchData = async () => {
-      try {
-        const [sessionsRes, matchesRes] = await Promise.all([
-          axios.get('/api/sessions/my-sessions', { headers: { 'x-auth-token': localStorage.getItem('token') } }),
-          axios.get('/api/matches', { headers: { 'x-auth-token': localStorage.getItem('token') } }),
-        ]);
-        setSessions(sessionsRes.data);
-        setMatches(matchesRes.data);
-        setStats({
-          totalSessions: sessionsRes.data.length,
-          completedSessions: sessionsRes.data.filter((s) => s.status === 'completed').length,
-          rating: user.ratings?.length
-            ? (user.ratings.reduce((sum, r) => sum + r.rating, 0) / user.ratings.length).toFixed(1)
-            : 0,
-        });
-        setLoading(false);
-      } catch (error) {
-        toast.error(error.response?.data?.msg || 'Error fetching dashboard data');
-        setLoading(false);
-      }
-    };
     fetchData();
+    const interval = setInterval(fetchData, 30000);
+    return () => clearInterval(interval);
   }, [user, navigate]);
 
   const handleCancelSession = async (sessionId) => {
@@ -75,19 +78,17 @@ function Dashboard({ user }) {
     }
   };
 
-  const handleConfirmSession = async (sessionId) => {
-    if (!window.confirm('Confirm this session?')) return;
-
+  const handleSessionAction = async (sessionId, action) => {
     try {
       const res = await axios.put(
         `/api/sessions/confirm/${sessionId}`,
-        {},
+        { action },
         { headers: { 'x-auth-token': localStorage.getItem('token') } }
       );
       toast.success(res.data.msg);
       setSessions(sessions.map((s) => (s._id === sessionId ? res.data.session : s)));
     } catch (error) {
-      toast.error(error.response?.data?.msg || 'Error confirming session');
+      toast.error(error.response?.data?.msg || 'Error processing session');
     }
   };
 
@@ -97,9 +98,46 @@ function Dashboard({ user }) {
 
   if (loading) return <div className="container">Loading dashboard...</div>;
 
+  const pendingRequests = sessions.filter(
+    (s) => s.teacherId._id === user.id && s.status === 'pending'
+  );
+
   return (
     <div className="container dashboard">
       <h1 className="dashboard-title">Welcome, {user.username}!</h1>
+      {pendingRequests.length > 0 && (
+        <section className="dashboard-section">
+          <h2>Pending Session Requests</h2>
+          <div className="session-grid">
+            {pendingRequests.map((session) => (
+              <div key={session._id} className="session-card notification-card">
+                <img src={session.learnerId.profileImage || ProfileImg} alt="Learner" className="session-image" />
+                <div className="session-details">
+                  <h3>{session.skillId.name}</h3>
+                  <p><strong>Requested by:</strong> {session.learnerId.username}</p>
+                  <p><strong>Date:</strong> {new Date(session.date).toLocaleString()}</p>
+                  <p><strong>Duration:</strong> {session.duration} minutes</p>
+                  <p><strong>Type:</strong> {session.type}</p>
+                  <div className="session-actions">
+                    <button
+                      onClick={() => handleSessionAction(session._id, 'confirm')}
+                      className="confirm-btn"
+                    >
+                      Confirm
+                    </button>
+                    <button
+                      onClick={() => handleSessionAction(session._id, 'reject')}
+                      className="reject-btn"
+                    >
+                      Reject
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
       <section className="dashboard-section">
         <h2>Profile Stats</h2>
         <div className="stats-grid">
@@ -126,21 +164,12 @@ function Dashboard({ user }) {
                 <img src={ProfileImg} alt="Teacher" className="session-image" />
                 <div className="session-details">
                   <h3>{session.skillId.name}</h3>
-                  <p>
-                    <strong>Teacher:</strong> {session.teacherId.username}
-                  </p>
-                  <p>
-                    <strong>Date:</strong> {new Date(session.date).toLocaleString()}
-                  </p>
-                  <p>
-                    <strong>Duration:</strong> {session.duration} minutes
-                  </p>
-                  <p>
-                    <strong>Type:</strong> {session.type}
-                  </p>
-                  <p>
-                    <strong>Status:</strong> {session.status}
-                  </p>
+                  <p><strong>Teacher:</strong> {session.teacherId.username}</p>
+                  <p><strong>Learner:</strong> {session.learnerId.username}</p>
+                  <p><strong>Date:</strong> {new Date(session.date).toLocaleString()}</p>
+                  <p><strong>Duration:</strong> {session.duration} minutes</p>
+                  <p><strong>Type:</strong> {session.type}</p>
+                  <p><strong>Status:</strong> {session.status}</p>
                   {rescheduleSessionId === session._id ? (
                     <div className="reschedule-form">
                       <h4>Reschedule Session</h4>
@@ -180,30 +209,23 @@ function Dashboard({ user }) {
                     </div>
                   ) : (
                     session.status !== 'completed' &&
-                    session.status !== 'cancelled' && (
+                    session.status !== 'cancelled' &&
+                    session.status !== 'rejected' && (
                       <div className="session-actions">
-                        {session.learnerId === user.id && (
-                          <>
-                            <button
-                              onClick={() => handleCancelSession(session._id)}
-                              className="cancel-session-btn"
-                            >
-                              Cancel
-                            </button>
-                            <button
-                              onClick={() => handleRescheduleSession(session._id)}
-                              className="reschedule-session-btn"
-                            >
-                              Reschedule
-                            </button>
-                          </>
-                        )}
-                        {session.teacherId === user.id && session.status === 'pending' && (
+                        {(session.learnerId._id === user.id || session.teacherId._id === user.id) && (
                           <button
-                            onClick={() => handleConfirmSession(session._id)}
-                            className="confirm-session-btn"
+                            onClick={() => handleCancelSession(session._id)}
+                            className="cancel-session-btn"
                           >
-                            Confirm
+                            Cancel
+                          </button>
+                        )}
+                        {session.learnerId._id === user.id && (
+                          <button
+                            onClick={() => handleRescheduleSession(session._id)}
+                            className="reschedule-session-btn"
+                          >
+                            Reschedule
                           </button>
                         )}
                       </div>

@@ -24,12 +24,10 @@ router.post(
     const { teacherId, skillId, date, duration, type } = req.body;
 
     try {
-      // Validate future date
       if (new Date(date) <= new Date()) {
         return res.status(400).json({ msg: 'Date must be in the future' });
       }
 
-      // Check for conflicting sessions
       const existingSession = await Session.findOne({
         teacherId,
         date: { $gte: new Date(date), $lte: new Date(new Date(date).getTime() + duration * 60000) },
@@ -48,7 +46,6 @@ router.post(
         type,
       });
       await session.save();
-      // TODO: Send notification to teacher (e.g., via email)
       res.json(session);
     } catch (error) {
       res.status(500).json({ msg: 'Server error', error: error.message });
@@ -85,8 +82,8 @@ router.delete('/cancel/:id', auth, async (req, res) => {
     ) {
       return res.status(403).json({ msg: 'Not authorized' });
     }
-    if (session.status === 'cancelled') {
-      return res.status(400).json({ msg: 'Session already cancelled' });
+    if (session.status === 'cancelled' || session.status === 'rejected') {
+      return res.status(400).json({ msg: 'Session already cancelled or rejected' });
     }
     if (session.status === 'completed') {
       return res.status(400).json({ msg: 'Cannot cancel completed session' });
@@ -94,7 +91,6 @@ router.delete('/cancel/:id', auth, async (req, res) => {
 
     session.status = 'cancelled';
     await session.save();
-    // TODO: Send notification to other party (e.g., via email)
     res.json({ msg: 'Session cancelled' });
   } catch (error) {
     res.status(500).json({ msg: 'Server error', error: error.message });
@@ -126,16 +122,14 @@ router.put(
       if (session.learnerId.toString() !== req.user.id) {
         return res.status(403).json({ msg: 'Only learner can reschedule' });
       }
-      if (session.status === 'cancelled' || session.status === 'completed') {
-        return res.status(400).json({ msg: 'Cannot reschedule cancelled or completed session' });
+      if (session.status === 'cancelled' || session.status === 'completed' || session.status === 'rejected') {
+        return res.status(400).json({ msg: 'Cannot reschedule cancelled, completed, or rejected session' });
       }
 
-      // Validate future date if provided
       if (date && new Date(date) <= new Date()) {
         return res.status(400).json({ msg: 'Date must be in the future' });
       }
 
-      // Check teacher availability if date changes
       if (date) {
         const existingSession = await Session.findOne({
           teacherId: session.teacherId,
@@ -153,7 +147,6 @@ router.put(
       session.type = type || session.type;
       session.status = 'pending';
       await session.save();
-      // TODO: Send notification to teacher (e.g., via email)
       res.json({ msg: 'Session rescheduled', session });
     } catch (error) {
       res.status(500).json({ msg: 'Server error', error: error.message });
@@ -161,27 +154,40 @@ router.put(
   }
 );
 
-// Confirm a session (teacher only)
-router.put('/confirm/:id', auth, async (req, res) => {
-  try {
-    const session = await Session.findById(req.params.id);
-    if (!session) {
-      return res.status(404).json({ msg: 'Session not found' });
-    }
-    if (session.teacherId.toString() !== req.user.id) {
-      return res.status(403).json({ msg: 'Only teacher can confirm' });
-    }
-    if (session.status !== 'pending') {
-      return res.status(400).json({ msg: 'Session cannot be confirmed' });
+// Confirm or reject a session (teacher only)
+router.put(
+  '/confirm/:id',
+  [
+    auth,
+    check('action', 'Action must be confirm or reject').isIn(['confirm', 'reject']),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
     }
 
-    session.status = 'confirmed';
-    await session.save();
-    // TODO: Send notification to learner (e.g., via email)
-    res.json({ msg: 'Session confirmed', session });
-  } catch (error) {
-    res.status(500).json({ msg: 'Server error', error: error.message });
+    const { action } = req.body;
+
+    try {
+      const session = await Session.findById(req.params.id);
+      if (!session) {
+        return res.status(404).json({ msg: 'Session not found' });
+      }
+      if (session.teacherId.toString() !== req.user.id) {
+        return res.status(403).json({ msg: 'Only teacher can confirm or reject' });
+      }
+      if (session.status !== 'pending') {
+        return res.status(400).json({ msg: 'Session cannot be confirmed or rejected' });
+      }
+
+      session.status = action === 'confirm' ? 'confirmed' : 'rejected';
+      await session.save();
+      res.json({ msg: `Session ${action}ed`, session });
+    } catch (error) {
+      res.status(500).json({ msg: 'Server error', error: error.message });
+    }
   }
-});
+);
 
 module.exports = router;

@@ -24,10 +24,17 @@ function Skills({ user }) {
           ? axios.get('/api/matches', { headers: { 'x-auth-token': localStorage.getItem('token') } })
           : Promise.resolve({ data: [] }),
       ]);
-      setSkills(skillsRes.data);
-      setFilteredSkills(skillsRes.data);
-      setCategories([...new Set(skillsRes.data.map((skill) => skill.category))]);
-      setMatches(matchesRes.data);
+      // Filter out logged-in user's skills
+      const userSkills = user
+        ? skillsRes.data.filter((skill) => skill.userId._id !== user.id)
+        : skillsRes.data;
+      const userMatches = user
+        ? matchesRes.data.filter((match) => match.userId._id !== user.id)
+        : matchesRes.data;
+      setSkills(userSkills);
+      setFilteredSkills(userSkills);
+      setCategories([...new Set(userSkills.map((skill) => skill.category))]);
+      setMatches(userMatches);
       setLoading(false);
     } catch (error) {
       toast.error(error.response?.data?.msg || 'Error fetching skills');
@@ -43,7 +50,7 @@ function Skills({ user }) {
     const handleFocus = () => fetchData();
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);
-  }, []);
+  }, [user]);
 
   const handleFilter = (category) => {
     setFilteredSkills(category ? skills.filter((skill) => skill.category === category) : skills);
@@ -122,4 +129,4 @@ function Skills({ user }) {
   );
 }
 
-export default Skills;
+export default Skills; 
