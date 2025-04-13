@@ -2,14 +2,16 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
-import ProfileImg from '../assets/profile-placeholder.png'
-
+import DatePicker from 'react-datepicker';
+import ProfileImg from '../assets/profile-placeholder.png';
 
 function Dashboard({ user }) {
   const [sessions, setSessions] = useState([]);
   const [matches, setMatches] = useState([]);
   const [stats, setStats] = useState({ totalSessions: 0, completedSessions: 0, rating: 0 });
   const [loading, setLoading] = useState(true);
+  const [rescheduleSessionId, setRescheduleSessionId] = useState(null);
+  const [rescheduleData, setRescheduleData] = useState({ date: new Date(), duration: 60, type: 'virtual' });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -19,14 +21,16 @@ function Dashboard({ user }) {
       try {
         const [sessionsRes, matchesRes] = await Promise.all([
           axios.get('/api/sessions/my-sessions', { headers: { 'x-auth-token': localStorage.getItem('token') } }),
-          axios.get('/api/matches', { headers: { 'x-auth-token': localStorage.getItem('token') } })
+          axios.get('/api/matches', { headers: { 'x-auth-token': localStorage.getItem('token') } }),
         ]);
         setSessions(sessionsRes.data);
         setMatches(matchesRes.data);
         setStats({
           totalSessions: sessionsRes.data.length,
-          completedSessions: sessionsRes.data.filter(s => s.status === 'completed').length,
-          rating: user.ratings?.length ? (user.ratings.reduce((sum, r) => sum + r.rating, 0) / user.ratings.length).toFixed(1) : 0
+          completedSessions: sessionsRes.data.filter((s) => s.status === 'completed').length,
+          rating: user.ratings?.length
+            ? (user.ratings.reduce((sum, r) => sum + r.rating, 0) / user.ratings.length).toFixed(1)
+            : 0,
         });
         setLoading(false);
       } catch (error) {
@@ -38,19 +42,57 @@ function Dashboard({ user }) {
   }, [user, navigate]);
 
   const handleCancelSession = async (sessionId) => {
+    if (!window.confirm('Are you sure you want to cancel this session?')) return;
+
     try {
       const res = await axios.delete(`/api/sessions/cancel/${sessionId}`, {
-        headers: { 'x-auth-token': localStorage.getItem('token') }
+        headers: { 'x-auth-token': localStorage.getItem('token') },
       });
       toast.success(res.data.msg);
-      setSessions(sessions.map(s => s._id === sessionId ? { ...s, status: 'cancelled' } : s));
+      setSessions(sessions.map((s) => (s._id === sessionId ? { ...s, status: 'cancelled' } : s)));
     } catch (error) {
       toast.error(error.response?.data?.msg || 'Error cancelling session');
     }
   };
 
-  const handleRescheduleSession = () => {
-    toast.info('Rescheduling not fully implemented!');
+  const handleRescheduleSession = async (sessionId) => {
+    if (!rescheduleSessionId) {
+      setRescheduleSessionId(sessionId);
+      return;
+    }
+
+    try {
+      const res = await axios.put(
+        `/api/sessions/reschedule/${sessionId}`,
+        rescheduleData,
+        { headers: { 'x-auth-token': localStorage.getItem('token') } }
+      );
+      toast.success(res.data.msg);
+      setSessions(sessions.map((s) => (s._id === sessionId ? res.data.session : s)));
+      setRescheduleSessionId(null);
+    } catch (error) {
+      toast.error(error.response?.data?.msg || 'Error rescheduling session');
+    }
+  };
+
+  const handleConfirmSession = async (sessionId) => {
+    if (!window.confirm('Confirm this session?')) return;
+
+    try {
+      const res = await axios.put(
+        `/api/sessions/confirm/${sessionId}`,
+        {},
+        { headers: { 'x-auth-token': localStorage.getItem('token') } }
+      );
+      toast.success(res.data.msg);
+      setSessions(sessions.map((s) => (s._id === sessionId ? res.data.session : s)));
+    } catch (error) {
+      toast.error(error.response?.data?.msg || 'Error confirming session');
+    }
+  };
+
+  const handleRescheduleChange = (field, value) => {
+    setRescheduleData((prev) => ({ ...prev, [field]: value }));
   };
 
   if (loading) return <div className="container">Loading dashboard...</div>;
@@ -61,34 +103,119 @@ function Dashboard({ user }) {
       <section className="dashboard-section">
         <h2>Profile Stats</h2>
         <div className="stats-grid">
-          <div className="stat-card"><h3>Total Sessions</h3><p>{stats.totalSessions}</p></div>
-          <div className="stat-card"><h3>Completed Sessions</h3><p>{stats.completedSessions}</p></div>
-          {/* <div className="stat-card"><h3>Average Rating</h3><p>{stats.rating}/5</p></div> */}
+          <div className="stat-card">
+            <h3>Total Sessions</h3>
+            <p>{stats.totalSessions}</p>
+          </div>
+          <div className="stat-card">
+            <h3>Completed Sessions</h3>
+            <p>{stats.completedSessions}</p>
+          </div>
+          <div className="stat-card">
+            <h3>Average Rating</h3>
+            <p>{stats.rating}/5</p>
+          </div>
         </div>
       </section>
       <section className="dashboard-section">
         <h2>Scheduled Sessions</h2>
         {sessions.length ? (
           <div className="session-grid">
-            {sessions.map(session => (
+            {sessions.map((session) => (
               <div key={session._id} className="session-card">
                 <img src={ProfileImg} alt="Teacher" className="session-image" />
                 <div className="session-details">
                   <h3>{session.skillId.name}</h3>
-                  <p><strong>Teacher:</strong> {session.teacherId.username}</p>
-                  <p><strong>Date:</strong> {new Date(session.date).toLocaleString()}</p>
-                  <p><strong>Status:</strong> {session.status}</p>
-                  {session.status !== 'completed' && session.status !== 'cancelled' && (
-                    <div className="session-actions">
-                      {/* <button onClick={() => handleCancelSession(session._id)} className="cancel-session-btn">Cancel</button>
-                      <button onClick={() => handleRescheduleSession()} className="reschedule-session-btn">Reschedule</button> */}
+                  <p>
+                    <strong>Teacher:</strong> {session.teacherId.username}
+                  </p>
+                  <p>
+                    <strong>Date:</strong> {new Date(session.date).toLocaleString()}
+                  </p>
+                  <p>
+                    <strong>Duration:</strong> {session.duration} minutes
+                  </p>
+                  <p>
+                    <strong>Type:</strong> {session.type}
+                  </p>
+                  <p>
+                    <strong>Status:</strong> {session.status}
+                  </p>
+                  {rescheduleSessionId === session._id ? (
+                    <div className="reschedule-form">
+                      <h4>Reschedule Session</h4>
+                      <DatePicker
+                        selected={rescheduleData.date}
+                        onChange={(date) => handleRescheduleChange('date', date)}
+                        showTimeSelect
+                        minDate={new Date()}
+                      />
+                      <select
+                        value={rescheduleData.duration}
+                        onChange={(e) => handleRescheduleChange('duration', Number(e.target.value))}
+                      >
+                        <option value={30}>30 min</option>
+                        <option value={60}>1 hr</option>
+                        <option value={90}>1.5 hr</option>
+                      </select>
+                      <select
+                        value={rescheduleData.type}
+                        onChange={(e) => handleRescheduleChange('type', e.target.value)}
+                      >
+                        <option value="virtual">Virtual</option>
+                        <option value="in-person">In-Person</option>
+                      </select>
+                      <button
+                        onClick={() => handleRescheduleSession(session._id)}
+                        className="confirm-reschedule-btn"
+                      >
+                        Confirm
+                      </button>
+                      <button
+                        onClick={() => setRescheduleSessionId(null)}
+                        className="cancel-reschedule-btn"
+                      >
+                        Cancel
+                      </button>
                     </div>
+                  ) : (
+                    session.status !== 'completed' &&
+                    session.status !== 'cancelled' && (
+                      <div className="session-actions">
+                        {session.learnerId === user.id && (
+                          <>
+                            <button
+                              onClick={() => handleCancelSession(session._id)}
+                              className="cancel-session-btn"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={() => handleRescheduleSession(session._id)}
+                              className="reschedule-session-btn"
+                            >
+                              Reschedule
+                            </button>
+                          </>
+                        )}
+                        {session.teacherId === user.id && session.status === 'pending' && (
+                          <button
+                            onClick={() => handleConfirmSession(session._id)}
+                            className="confirm-session-btn"
+                          >
+                            Confirm
+                          </button>
+                        )}
+                      </div>
+                    )
                   )}
                 </div>
               </div>
             ))}
           </div>
-        ) : <p>No sessions scheduled.</p>}
+        ) : (
+          <p>No sessions scheduled.</p>
+        )}
       </section>
     </div>
   );

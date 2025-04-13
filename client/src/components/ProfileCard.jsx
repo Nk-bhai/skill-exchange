@@ -1,22 +1,21 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import ProfileImg from '../assets/profile-placeholder.png'
-
+import ProfileImg from '../assets/profile-placeholder.png';
 
 function ProfileCard({ user, isOwnProfile }) {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    skillsToTeach: user.skillsToTeach.join(', '),
-    skillsToLearn: user.skillsToLearn.join(', '),
+    username: user.username || '',
     bio: user.bio || '',
-    profileImage: user.profileImage,
-    location: user.location,
-    experienceLevel: user.experienceLevel,
-    interests: user.interests.join(', ')
+    location: user.location || '',
+    experienceLevel: user.experienceLevel || 'Beginner',
+    interests: user.interests?.join(', ') || '',
+    skillsToTeach: user.skillsToTeach?.join(', ') || '',
+    skillsToLearn: user.skillsToLearn?.join(', ') || '',
   });
 
-  const handleChange = (e) => {
+  const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
@@ -24,20 +23,19 @@ function ProfileCard({ user, isOwnProfile }) {
     e.preventDefault();
     try {
       const updatedData = {
-        skillsToTeach: formData.skillsToTeach.split(',').map(s => s.trim()),
-        skillsToLearn: formData.skillsToLearn.split(',').map(s => s.trim()),
-        bio: formData.bio,
-        profileImage: formData.profileImage,
-        location: formData.location,
-        experienceLevel: formData.experienceLevel,
-        interests: formData.interests.split(',').map(i => i.trim())
+        ...formData,
+        interests: formData.interests.split(',').map((item) => item.trim()).filter(Boolean),
+        skillsToTeach: formData.skillsToTeach.split(',').map((item) => item.trim()).filter(Boolean),
+        skillsToLearn: formData.skillsToLearn.split(',').map((item) => item.trim()).filter(Boolean),
       };
-      const res = await axios.put('/api/users/profile', updatedData, {
-        headers: { 'x-auth-token': localStorage.getItem('token') }
-      });
-      toast.success('Profile updated!');
+      const res = await axios.put(
+        '/api/users/profile',
+        updatedData,
+        { headers: { 'x-auth-token': localStorage.getItem('token') } }
+      );
+      toast.success('Profile updated! Skills are now available to teach.');
       setIsEditing(false);
-      Object.assign(user, res.data);
+      Object.assign(user, res.data); // Update local user object
     } catch (error) {
       toast.error(error.response?.data?.msg || 'Error updating profile');
     }
@@ -45,78 +43,102 @@ function ProfileCard({ user, isOwnProfile }) {
 
   return (
     <div className="profile-card">
-      <div className="profile-header">
-        <img src={ProfileImg} alt="Profile" className="profile-image" />
-        <h2 className="profile-username">{user.username}</h2>
-      </div>
+      <img src={user.profileImage || ProfileImg} alt="Profile" className="profile-image" />
       {isEditing ? (
-        <form onSubmit={handleSubmit} className="profile-edit-form">
+        <form onSubmit={handleSubmit} className="profile-form">
           <div className="form-group">
-            <label>Skills to Teach (comma-separated)</label>
-            <input type="text" name="skillsToTeach" value={formData.skillsToTeach} onChange={handleChange} />
-          </div>
-          <div className="form-group">
-            <label>Skills to Learn (comma-separated)</label>
-            <input type="text" name="skillsToLearn" value={formData.skillsToLearn} onChange={handleChange} />
+            <label>Username</label>
+            <input
+              type="text"
+              name="username"
+              value={formData.username}
+              onChange={handleInputChange}
+              placeholder="Username"
+              required
+            />
           </div>
           <div className="form-group">
             <label>Bio</label>
-            <textarea name="bio" value={formData.bio} onChange={handleChange} />
-          </div>
-          <div className="form-group">
-            <label>Profile Image URL</label>
-            <input type="text" name="profileImage" value={formData.profileImage} onChange={handleChange} />
+            <textarea
+              name="bio"
+              value={formData.bio}
+              onChange={handleInputChange}
+              placeholder="Tell us about yourself"
+            />
           </div>
           <div className="form-group">
             <label>Location</label>
-            <input type="text" name="location" value={formData.location} onChange={handleChange} />
+            <input
+              type="text"
+              name="location"
+              value={formData.location}
+              onChange={handleInputChange}
+              placeholder="Location"
+            />
           </div>
           <div className="form-group">
             <label>Experience Level</label>
-            <select name="experienceLevel" value={formData.experienceLevel} onChange={handleChange}>
+            <select
+              name="experienceLevel"
+              value={formData.experienceLevel}
+              onChange={handleInputChange}
+            >
               <option value="Beginner">Beginner</option>
               <option value="Intermediate">Intermediate</option>
               <option value="Advanced">Advanced</option>
             </select>
           </div>
           <div className="form-group">
-            <label>Interests (comma-separated)</label>
-            <input type="text" name="interests" value={formData.interests} onChange={handleChange} />
+            <label>Interests</label>
+            <input
+              type="text"
+              name="interests"
+              value={formData.interests}
+              onChange={handleInputChange}
+              placeholder="Interests (e.g., coding, music)"
+            />
           </div>
-          <button type="submit" className="save-btn">Save</button>
-          <button type="button" onClick={() => setIsEditing(false)} className="cancel-btn">Cancel</button>
+          <div className="form-group">
+            <label>Skills to Teach</label>
+            <input
+              type="text"
+              name="skillsToTeach"
+              value={formData.skillsToTeach}
+              onChange={handleInputChange}
+              placeholder="Skills to teach (e.g., Python, JavaScript)"
+            />
+            <small>Enter skills you can teach, separated by commas</small>
+          </div>
+          <div className="form-group">
+            <label>Skills to Learn</label>
+            <input
+              type="text"
+              name="skillsToLearn"
+              value={formData.skillsToLearn}
+              onChange={handleInputChange}
+              placeholder="Skills to learn (e.g., Data Science, UI Design)"
+            />
+          </div>
+          <div className="form-actions">
+            <button type="submit" className="save-btn">Save</button>
+            <button type="button" className="cancel-btn" onClick={() => setIsEditing(false)}>
+              Cancel
+            </button>
+          </div>
         </form>
       ) : (
-        <>
-          <p className="profile-bio">{user.bio || 'No bio available'}</p>
-          <p className="profile-detail"><strong>Location:</strong> {user.location}</p>
-          <p className="profile-detail"><strong>Experience:</strong> {user.experienceLevel}</p>
-          <div className="profile-section">
-            <h3>Interests</h3>
-            <ul className="skill-list">
-              {user.interests.length ? user.interests.map((interest, index) => (
-                <li key={index} className="skill-item">{interest}</li>
-              )) : <li>No interests listed</li>}
-            </ul>
-          </div>
-          <div className="profile-section">
-            <h3>Skills to Teach</h3>
-            <ul className="skill-list">
-              {user.skillsToTeach.length ? user.skillsToTeach.map((skill, index) => (
-                <li key={index} className="skill-item">{skill}</li>
-              )) : <li>No skills listed</li>}
-            </ul>
-          </div>
-          <div className="profile-section">
-            <h3>Skills to Learn</h3>
-            <ul className="skill-list">
-              {user.skillsToLearn.length ? user.skillsToLearn.map((skill, index) => (
-                <li key={index} className="skill-item">{skill}</li>
-              )) : <li>No skills listed</li>}
-            </ul>
-          </div>
-          {isOwnProfile && <button onClick={() => setIsEditing(true)} className="edit-btn">Edit Profile</button>}
-        </>
+        <div className="profile-details">
+          <h2>{user.username}</h2>
+          <p><strong>Bio:</strong> {user.bio || 'No bio'}</p>
+          <p><strong>Location:</strong> {user.location || 'Not specified'}</p>
+          <p><strong>Experience:</strong> {user.experienceLevel}</p>
+          <p><strong>Interests:</strong> {user.interests?.join(', ') || 'None'}</p>
+          <p><strong>Skills to Teach:</strong> {user.skillsToTeach?.join(', ') || 'None'}</p>
+          <p><strong>Skills to Learn:</strong> {user.skillsToLearn?.join(', ') || 'None'}</p>
+          {isOwnProfile && (
+            <button className="edit-btn" onClick={() => setIsEditing(true)}>Edit Profile</button>
+          )}
+        </div>
       )}
     </div>
   );

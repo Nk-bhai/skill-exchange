@@ -3,8 +3,7 @@ import axios from 'axios';
 import SkillList from '../components/SkillList';
 import { toast } from 'react-toastify';
 import DatePicker from 'react-datepicker';
-import ProfileImg from '../assets/profile-placeholder.png'
-
+import ProfileImg from '../assets/profile-placeholder.png';
 
 function Skills({ user }) {
   const [skills, setSkills] = useState([]);
@@ -17,41 +16,54 @@ function Skills({ user }) {
   const [duration, setDuration] = useState(60);
   const [type, setType] = useState('virtual');
 
+  const fetchData = async () => {
+    try {
+      const [skillsRes, matchesRes] = await Promise.all([
+        axios.get('/api/skills'),
+        user
+          ? axios.get('/api/matches', { headers: { 'x-auth-token': localStorage.getItem('token') } })
+          : Promise.resolve({ data: [] }),
+      ]);
+      setSkills(skillsRes.data);
+      setFilteredSkills(skillsRes.data);
+      setCategories([...new Set(skillsRes.data.map((skill) => skill.category))]);
+      setMatches(matchesRes.data);
+      setLoading(false);
+    } catch (error) {
+      toast.error(error.response?.data?.msg || 'Error fetching skills');
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [skillsRes, matchesRes] = await Promise.all([
-          axios.get('/api/skills'),
-          user ? axios.get('/api/matches', { headers: { 'x-auth-token': localStorage.getItem('token') } }) : Promise.resolve({ data: [] })
-        ]);
-        setSkills(skillsRes.data);
-        setFilteredSkills(skillsRes.data);
-        setCategories([...new Set(skillsRes.data.map(skill => skill.category))]);
-        setMatches(matchesRes.data);
-        setLoading(false);
-      } catch (error) {
-        toast.error(error.response?.data?.msg || 'Error fetching skills');
-        setLoading(false);
-      }
-    };
     fetchData();
   }, [user]);
 
+  useEffect(() => {
+    const handleFocus = () => fetchData();
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, []);
+
   const handleFilter = (category) => {
-    setFilteredSkills(category ? skills.filter(skill => skill.category === category) : skills);
+    setFilteredSkills(category ? skills.filter((skill) => skill.category === category) : skills);
   };
 
   const handleScheduleMatch = async (match) => {
     if (!user) return toast.error('Please login to schedule a session');
     if (selectedMatch && selectedMatch._id === match._id) {
       try {
-        const res = await axios.post('/api/sessions/schedule', {
-          teacherId: match.userId._id,
-          skillId: match._id,
-          date,
-          duration,
-          type
-        }, { headers: { 'x-auth-token': localStorage.getItem('token') } });
+        const res = await axios.post(
+          '/api/sessions/schedule',
+          {
+            teacherId: match.userId._id,
+            skillId: match._id,
+            date,
+            duration,
+            type,
+          },
+          { headers: { 'x-auth-token': localStorage.getItem('token') } }
+        );
         toast.success('Session scheduled!');
         setSelectedMatch(null);
       } catch (error) {
@@ -87,16 +99,18 @@ function Skills({ user }) {
         <div className="matches-preview">
           <h2>Recommended Matches</h2>
           <div className="skill-grid">
-            {matches.map(match => (
-              <div key={match._id} className="skill-card ">
-                <img src={ProfileImg} alt="Tutor" className="skill-image" />
+            {matches.map((match) => (
+              <div key={match._id} className="skill-card">
+                <img src={match.userId.profileImage || ProfileImg} alt="Tutor" className="skill-image" />
                 <h3 className="skill-name">{match.name}</h3>
                 <p className="skill-tutor">Tutor: {match.userId.username}</p>
                 <p className="skill-desc">{match.description || 'No description'}</p>
                 {selectedMatch && selectedMatch._id === match._id ? (
                   renderScheduleForm(match)
                 ) : (
-                  <button onClick={() => handleScheduleMatch(match)} className="schedule-btn">Schedule Session</button>
+                  <button onClick={() => handleScheduleMatch(match)} className="schedule-btn">
+                    Schedule Session
+                  </button>
                 )}
               </div>
             ))}
