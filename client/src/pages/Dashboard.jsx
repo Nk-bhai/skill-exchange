@@ -4,7 +4,7 @@ import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import DatePicker from 'react-datepicker';
 import ProfileImg from '../assets/profile-placeholder.png';
-import '../App.css'; // Ensure CSS is imported
+import '../App.css';
 
 function Dashboard({ user }) {
   const [sessions, setSessions] = useState([]);
@@ -92,8 +92,31 @@ function Dashboard({ user }) {
     }
   };
 
+  const handleCompleteSession = async (sessionId) => {
+    try {
+      const res = await axios.put(
+        `/api/sessions/complete/${sessionId}`,
+        {},
+        { headers: { 'x-auth-token': localStorage.getItem('token') } }
+      );
+      toast.success(res.data.msg);
+      setSessions(sessions.map((s) => (s._id === sessionId ? { ...s, status: 'completed' } : s)));
+    } catch (error) {
+      toast.error(error.response?.data?.msg || 'Error completing session');
+    }
+  };
+
   const handleRescheduleChange = (field, value) => {
     setRescheduleData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const isSessionActive = (session) => {
+    const now = new Date();
+    const startTime = new Date(session.date);
+    const endTime = new Date(startTime.getTime() + session.duration * 60000);
+    // Allow joining 5 minutes before start
+    const earlyStart = new Date(startTime.getTime() - 5 * 60000);
+    return session.status === 'confirmed' && now >= earlyStart && now <= endTime;
   };
 
   if (loading) return <div className="container">Loading dashboard...</div>;
@@ -101,10 +124,46 @@ function Dashboard({ user }) {
   const pendingRequests = sessions.filter(
     (s) => s.teacherId._id === user.id && s.status === 'pending'
   );
+  const activeSessions = sessions.filter(isSessionActive);
 
   return (
     <div className="container dashboard">
       <h1 className="dashboard-title">Welcome, {user.username}!</h1>
+      {activeSessions.length > 0 && (
+        <section className="dashboard-section">
+          <h2>Active Sessions</h2>
+          <div className="session-grid">
+            {activeSessions.map((session) => (
+              <div key={session._id} className="session-card notification-card">
+                <img src={session.learnerId.profileImage || ProfileImg} alt="Learner" className="session-image" />
+                <div className="session-details">
+                  <h3>{session.skillId.name}</h3>
+                  <p><strong>With:</strong> {session.teacherId._id === user.id ? session.learnerId.username : session.teacherId.username}</p>
+                  <p><strong>Date:</strong> {new Date(session.date).toLocaleString()}</p>
+                  <p><strong>Duration:</strong> {session.duration} minutes</p>
+                  <p><strong>Type:</strong> {session.type}</p>
+                  <div className="session-actions">
+                    <a
+                      href={session.meetingLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="join-session-btn"
+                    >
+                      Join Session
+                    </a>
+                    <button
+                      onClick={() => handleCompleteSession(session._id)}
+                      className="complete-session-btn"
+                    >
+                      End Session
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
       {pendingRequests.length > 0 && (
         <section className="dashboard-section">
           <h2>Pending Session Requests</h2>

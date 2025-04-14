@@ -163,6 +163,38 @@
   background-color: #c82333;
 }
 
+.join-session-btn {
+  background-color: #28a745;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s;
+  text-decoration: none;
+  text-align: center;
+}
+
+.join-session-btn:hover {
+  background-color: #218838;
+}
+
+.complete-session-btn {
+  background-color: #dc3545;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s;
+}
+
+.complete-session-btn:hover {
+  background-color: #c82333;
+}
+
 @media (max-width: 600px) {
   .profile-card {
     margin: 10px;
@@ -182,7 +214,9 @@
   .cancel-btn,
   .edit-btn,
   .confirm-btn,
-  .reject-btn {
+  .reject-btn,
+  .join-session-btn,
+  .complete-session-btn {
     padding: 8px 15px;
     font-size: 14px;
   }

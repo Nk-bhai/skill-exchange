@@ -36,6 +36,10 @@ const sessionSchema = new mongoose.Schema({
     enum: ['pending', 'confirmed', 'rejected', 'cancelled', 'completed'],
     default: 'pending',
   },
+  meetingLink: {
+    type: String,
+    default: null,
+  },
   createdAt: {
     type: Date,
     default: Date.now,

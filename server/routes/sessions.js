@@ -4,6 +4,16 @@ const auth = require('../middleware/auth');
 const Session = require('../models/Session');
 const { check, validationResult } = require('express-validator');
 
+// Generate random string for Jitsi URL security
+const generateRandomString = (length) => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  for (let i = 0; i < length; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+};
+
 // Schedule a new session
 router.post(
   '/schedule',
@@ -146,6 +156,7 @@ router.put(
       session.duration = duration || session.duration;
       session.type = type || session.type;
       session.status = 'pending';
+      session.meetingLink = null; // Reset meeting link on reschedule
       await session.save();
       res.json({ msg: 'Session rescheduled', session });
     } catch (error) {
@@ -182,6 +193,11 @@ router.put(
       }
 
       session.status = action === 'confirm' ? 'confirmed' : 'rejected';
+      if (action === 'confirm') {
+        // Generate Jitsi Meet URL
+        const randomSuffix = generateRandomString(6);
+        session.meetingLink = `https://meet.jit.si/SkillExchange_${session._id}_${randomSuffix}`;
+      }
       await session.save();
       res.json({ msg: `Session ${action}ed`, session });
     } catch (error) {
@@ -189,5 +205,30 @@ router.put(
     }
   }
 );
+
+// Complete a session
+router.put('/complete/:id', auth, async (req, res) => {
+  try {
+    const session = await Session.findById(req.params.id);
+    if (!session) {
+      return res.status(404).json({ msg: 'Session not found' });
+    }
+    if (
+      session.learnerId.toString() !== req.user.id &&
+      session.teacherId.toString() !== req.user.id
+    ) {
+      return res.status(403).json({ msg: 'Not authorized' });
+    }
+    if (session.status !== 'confirmed') {
+      return res.status(400).json({ msg: 'Session cannot be completed' });
+    }
+
+    session.status = 'completed';
+    await session.save();
+    res.json({ msg: 'Session completed', session });
+  } catch (error) {
+    res.status(500).json({ msg: 'Server error', error: error.message });
+  }
+});
 
 module.exports = router;
