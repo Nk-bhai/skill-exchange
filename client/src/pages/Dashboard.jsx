@@ -151,12 +151,7 @@ function Dashboard({ user }) {
                     >
                       Join Session
                     </a>
-                    <button
-                      onClick={() => handleCompleteSession(session._id)}
-                      className="complete-session-btn"
-                    >
-                      End Session
-                    </button>
+                  
                   </div>
                 </div>
               </div>
@@ -207,10 +202,6 @@ function Dashboard({ user }) {
           <div className="stat-card">
             <h3>Completed Sessions</h3>
             <p>{stats.completedSessions}</p>
-          </div>
-          <div className="stat-card">
-            <h3>Average Rating</h3>
-            <p>{stats.rating}/5</p>
           </div>
         </div>
       </section>
